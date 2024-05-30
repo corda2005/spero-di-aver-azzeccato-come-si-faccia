@@ -1,0 +1,16 @@
+#include <SoftwareSerial.h> 
+SoftwareSerial rxtx(10, 11);
+int LED_state;
+ void setup () {
+pinMode(10, INPUT);
+pinMode(11, OUTPUT);
+pinMode(LED_BUILTIN, OUTPUT);
+Serial.begin(9600);
+rxtx.begin(9600);
+ }
+
+ void loop () {
+LED_state = rxtx.read();
+Serial.println(LED_state);
+digitalWrite(LED_BUILTIN, LED_state);
+ }
