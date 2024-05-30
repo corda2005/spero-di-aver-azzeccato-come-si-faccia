@@ -1,0 +1,95 @@
+/*
+ * This Arduino Nano ESP32 code was developed by newbiely.com
+ *
+ * This Arduino Nano ESP32 code is made available for public use without any restriction
+ *
+ * For comprehensive instructions and wiring diagrams, please visit:
+ * https://newbiely.com/tutorials/arduino-nano-esp32/arduino-nano-esp32-controls-led-via-web
+ */
+
+#include <WiFi.h>
+#include <ESPAsyncWebServer.h>
+
+#define LED_PIN D5  // The Arduino Nano ESP32 pin connected to LED
+
+const char *ssid = "iPhone di Gabriele Simone";     // CHANGE IT
+const char *password = "cagliari1920";  // CHANGE IT
+
+AsyncWebServer server(80);
+
+#define RX2 D4
+#define TX2 D5
+
+bool LED_state = 0;
+
+String getHTML() {
+  String html = "<!DOCTYPE HTML>";
+  html += "<html>";
+  html += "<head>";
+  html += "<link rel='icon' href='data:,'>";
+  html += "</head>";
+  html += "<p>LED state: <span style='color: red;'>";
+
+  if (LED_state == 0)
+    html += "OFF";
+  else
+    html += "ON";
+
+  html += "</span></p>";
+  html += "<a href='/led1/on'>Turn ON</a>";
+  html += "<br><br>";
+  html += "<a href='/led1/off'>Turn OFF</a>";
+  html += "</html>";
+
+  return html;
+}
+
+void setup() {
+  Serial2.begin(9600, SERIAL_8N1, RX2, TX2);
+  pinMode(D4, INPUT);
+  pinMode(D5, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
+  
+
+  // Connect to Wi-Fi
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");
+
+  // Print the ESP32's IP address
+  Serial.print("Arduino Nano ESP32 Web Server's IP address: ");
+  Serial.println(WiFi.localIP());
+
+  // home page
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    Serial.println("Arduino Nano ESP32 Web Server: New request received:");
+    Serial.println("GET /");
+    request->send(200, "text/html", getHTML());
+  });
+
+  // Route to control the LED
+  server.on("/led1/on", HTTP_GET, [](AsyncWebServerRequest *request) {
+    Serial.println("Arduino Nano ESP32 Web Server: New request received:");
+    Serial.println("GET /led1/on");
+    LED_state = 1;
+    digitalWrite(LED_BUILTIN, LED_state); 
+    request->send(200, "text/html", getHTML());
+  });
+  server.on("/led1/off", HTTP_GET, [](AsyncWebServerRequest *request) {
+    Serial.println("Arduino Nano ESP32 Web Server: New request received:");
+    Serial.println("GET /led1/off");
+    LED_state = 0; 
+    digitalWrite(LED_BUILTIN, LED_state); 
+    request->send(200, "text/html", getHTML());
+  });
+
+  // Start the server
+  server.begin();
+}
+
+void loop() {
+   Serial2.write(LED_state); 
+}
